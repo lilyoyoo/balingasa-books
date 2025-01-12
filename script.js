@@ -1,4 +1,4 @@
-const users = JSON.parse(localStorage.getItem('users')) || {};
+const users = JSON.parse(localStorage.getItem('users')) || {}; 
 let currentUser = null;
 
 const books = [
@@ -94,8 +94,7 @@ function login() {
         currentUser = username;
         alert(`Welcome, ${username}!`);
         updateBookLists();
-        showSection('borrow-section');
-    } else {
+     } else {
         alert("Invalid credentials!");
     }
 }
@@ -126,3 +125,4 @@ function exportToExcel() {
 
 // Initialize the app
 updateBookLists();
+showSection('borrow-section');
