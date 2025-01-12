@@ -1,5 +1,4 @@
-// Assuming Firebase is set up and initialized
-// Replace with your Firebase config
+// Firebase Configuration and Initialization (ensure you replace with your actual Firebase credentials)
 const firebaseConfig = {
     apiKey: 'YOUR_API_KEY',
     authDomain: 'YOUR_AUTH_DOMAIN',
@@ -27,8 +26,14 @@ const books = [
 let borrowedBooks = JSON.parse(localStorage.getItem('borrowedBooks')) || {};
 
 function showSection(sectionId) {
+    console.log(`Switching to section: ${sectionId}`);
     document.querySelectorAll('.section').forEach(section => section.classList.remove('active'));
-    document.getElementById(sectionId).classList.add('active');
+    const section = document.getElementById(sectionId);
+    if (section) {
+        section.classList.add('active');
+    } else {
+        console.error(`Section with id '${sectionId}' not found.`);
+    }
 }
 
 function updateBookLists() {
@@ -50,7 +55,6 @@ function updateBookLists() {
     });
 }
 
-// Securely hash the password using SHA-256
 async function hashPassword(password) {
     const encoder = new TextEncoder();
     const data = encoder.encode(password);
@@ -61,7 +65,6 @@ async function hashPassword(password) {
 }
 
 function sanitizeInput(input) {
-    // Escape harmful characters to prevent XSS attacks
     return input.replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 
@@ -160,5 +163,8 @@ function exportToExcel() {
 }
 
 // Initialize the app
-updateBookLists();
-showSection('borrow-section');
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Document is fully loaded');
+    updateBookLists();
+    showSection('login-section');
+});
