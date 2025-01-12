@@ -39,14 +39,7 @@ function updateBookLists() {
     });
 }
 
-async function hashPassword(password) {
-    const encoder = new TextEncoder();
-    const data = encoder.encode(password);
-    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-    return Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
-}
-
-async function borrowBook() {
+function borrowBook() {
     const selectedBook = document.getElementById('book-select').value;
     if (selectedBook) {
         const borrowTime = new Date().toLocaleString();
@@ -73,7 +66,7 @@ function returnBook(book) {
     }
 }
 
-async function register() {
+function register() {
     const username = document.getElementById('username-register').value;
     const password = document.getElementById('password-register').value;
     const age = document.getElementById('age').value;
@@ -83,8 +76,7 @@ async function register() {
         if (users[username]) {
             alert("User already exists!");
         } else {
-            const hashedPassword = await hashPassword(password);
-            users[username] = { password: hashedPassword, age, gender };
+            users[username] = { password, age, gender };
             localStorage.setItem('users', JSON.stringify(users));
             alert("Registration successful! Please log in.");
             showSection('login-section');
@@ -94,21 +86,15 @@ async function register() {
     }
 }
 
-async function login() {
+function login() {
     const username = document.getElementById('username-login').value;
     const password = document.getElementById('password-login').value;
 
-    if (users[username]) {
-        const hashedPassword = await hashPassword(password);
-        if (users[username].password === hashedPassword) {
-            currentUser = username;
-            alert(`Welcome, ${username}!`);
-            updateBookLists();
-            showSection('borrow-section');
-        } else {
-            alert("Invalid credentials!");
-        }
-    } else {
+    if (users[username] && users[username].password === password) {
+        currentUser = username;
+        alert(`Welcome, ${username}!`);
+        updateBookLists();
+     } else {
         alert("Invalid credentials!");
     }
 }
@@ -137,6 +123,6 @@ function exportToExcel() {
     }
 }
 
-// Initialize the app and show login section by default
+// Initialize the app
 updateBookLists();
-showSection('login-section');
+showSection('borrow-section');
