@@ -125,4 +125,4 @@ function exportToExcel() {
 
 // Initialize the app
 updateBookLists();
-showSection('borrow-section');
+showSection('login-section');
