@@ -15,6 +15,10 @@ const books = [
 
 let borrowedBooks = JSON.parse(localStorage.getItem('borrowedBooks')) || {};
 
+document.addEventListener('DOMContentLoaded', () => {
+    showSection('login-section');
+});
+
 function showSection(sectionId) {
     document.querySelectorAll('.section').forEach(section => section.classList.remove('active'));
     document.getElementById(sectionId).classList.add('active');
@@ -93,6 +97,7 @@ function login() {
     if (users[username] && users[username].password === password) {
         currentUser = username;
         alert(`Welcome, ${username}!`);
+        showSection('borrow-section');
         updateBookLists();
      } else {
         alert("Invalid credentials!");
@@ -125,4 +130,3 @@ function exportToExcel() {
 
 // Initialize the app
 updateBookLists();
-showSection('borrow-section');
