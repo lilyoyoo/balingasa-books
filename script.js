@@ -15,9 +15,18 @@ const books = [
 
 let borrowedBooks = JSON.parse(localStorage.getItem('borrowedBooks')) || {};
 
+// Show specific section
 function showSection(sectionId) {
-    document.querySelectorAll('.section').forEach(section => section.classList.remove('active'));
-    document.getElementById(sectionId).classList.add('active');
+    // Hide all sections
+    document.querySelectorAll('.section').forEach(section => {
+        section.classList.remove('active');
+    });
+
+    // Show the selected section
+    const section = document.getElementById(sectionId);
+    if (section) {
+        section.classList.add('active');
+    }
 }
 
 function updateBookLists() {
@@ -125,5 +134,7 @@ function exportToExcel() {
 }
 
 // Initialize the app
-// Initially, only login section should be visible, so this is handled after login
-showSection('login-section');
+window.onload = () => {
+    showSection('login-section');  // Show the login section by default
+    updateBookLists();  // Populate book lists if the user is already logged in
+};
