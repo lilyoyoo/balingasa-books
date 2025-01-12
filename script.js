@@ -1,14 +1,4 @@
-// Firebase Configuration and Initialization (ensure you replace with your actual Firebase credentials)
-const firebaseConfig = {
-    apiKey: 'YOUR_API_KEY',
-    authDomain: 'YOUR_AUTH_DOMAIN',
-    projectId: 'YOUR_PROJECT_ID',
-    storageBucket: 'YOUR_STORAGE_BUCKET',
-    messagingSenderId: 'YOUR_MESSAGING_SENDER_ID',
-    appId: 'YOUR_APP_ID'
-};
-firebase.initializeApp(firebaseConfig);
-
+const users = JSON.parse(localStorage.getItem('users')) || {}; 
 let currentUser = null;
 
 const books = [
@@ -26,14 +16,8 @@ const books = [
 let borrowedBooks = JSON.parse(localStorage.getItem('borrowedBooks')) || {};
 
 function showSection(sectionId) {
-    console.log(`Switching to section: ${sectionId}`);
     document.querySelectorAll('.section').forEach(section => section.classList.remove('active'));
-    const section = document.getElementById(sectionId);
-    if (section) {
-        section.classList.add('active');
-    } else {
-        console.error(`Section with id '${sectionId}' not found.`);
-    }
+    document.getElementById(sectionId).classList.add('active');
 }
 
 function updateBookLists() {
@@ -55,71 +39,9 @@ function updateBookLists() {
     });
 }
 
-async function hashPassword(password) {
-    const encoder = new TextEncoder();
-    const data = encoder.encode(password);
-    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-    const hashArray = Array.from(new Uint8Array(hashBuffer));
-    const hashHex = hashArray.map(byte => byte.toString(16).padStart(2, '0')).join('');
-    return hashHex;
-}
-
-function sanitizeInput(input) {
-    return input.replace(/</g, "&lt;").replace(/>/g, "&gt;");
-}
-
-function register() {
-    const username = sanitizeInput(document.getElementById('username-register').value);
-    const password = sanitizeInput(document.getElementById('password-register').value);
-    const age = sanitizeInput(document.getElementById('age').value);
-    const gender = sanitizeInput(document.getElementById('gender').value);
-
-    if (username && password && age && gender) {
-        firebase.auth().createUserWithEmailAndPassword(username, password)
-            .then(userCredential => {
-                const user = userCredential.user;
-                alert("Registration successful! Please log in.");
-                showSection('login-section');
-            })
-            .catch(error => {
-                alert("Error during registration: " + error.message);
-            });
-    } else {
-        alert("Please fill in all fields.");
-    }
-}
-
-function login() {
-    const username = sanitizeInput(document.getElementById('username-login').value);
-    const password = sanitizeInput(document.getElementById('password-login').value);
-
-    firebase.auth().signInWithEmailAndPassword(username, password)
-        .then(userCredential => {
-            const user = userCredential.user;
-            currentUser = user.email;
-            alert(`Welcome, ${user.email}!`);
-            updateBookLists();
-        })
-        .catch(error => {
-            alert("Invalid credentials: " + error.message);
-        });
-}
-
-function logout() {
-    firebase.auth().signOut()
-        .then(() => {
-            currentUser = null;
-            alert("You have been logged out!");
-            showSection('login-section');
-        })
-        .catch(error => {
-            alert("Error logging out: " + error.message);
-        });
-}
-
 function borrowBook() {
     const selectedBook = document.getElementById('book-select').value;
-    if (selectedBook && currentUser) {
+    if (selectedBook) {
         const borrowTime = new Date().toLocaleString();
         borrowedBooks[selectedBook] = {
             user: currentUser,
@@ -129,7 +51,7 @@ function borrowBook() {
         updateBookLists();
         alert(`You have borrowed "${selectedBook}" at ${borrowTime}`);
     } else {
-        alert("Please select a book to borrow or you are not logged in!");
+        alert("Please select a book to borrow!");
     }
 }
 
@@ -142,6 +64,45 @@ function returnBook(book) {
     } else {
         alert("This book was not borrowed by you!");
     }
+}
+
+function register() {
+    const username = document.getElementById('username-register').value;
+    const password = document.getElementById('password-register').value;
+    const age = document.getElementById('age').value;
+    const gender = document.getElementById('gender').value;
+
+    if (username && password && age && gender) {
+        if (users[username]) {
+            alert("User already exists!");
+        } else {
+            users[username] = { password, age, gender };
+            localStorage.setItem('users', JSON.stringify(users));
+            alert("Registration successful! Please log in.");
+            showSection('login-section');
+        }
+    } else {
+        alert("Please fill in all fields.");
+    }
+}
+
+function login() {
+    const username = document.getElementById('username-login').value;
+    const password = document.getElementById('password-login').value;
+
+    if (users[username] && users[username].password === password) {
+        currentUser = username;
+        alert(`Welcome, ${username}!`);
+        updateBookLists();
+     } else {
+        alert("Invalid credentials!");
+    }
+}
+
+function logout() {
+    currentUser = null;
+    alert("You have been logged out!");
+    showSection('login-section');
 }
 
 function exportToExcel() {
@@ -163,8 +124,5 @@ function exportToExcel() {
 }
 
 // Initialize the app
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('Document is fully loaded');
-    updateBookLists();
-    showSection('login-section');
-});
+updateBookLists();
+showSection('borrow-section');
