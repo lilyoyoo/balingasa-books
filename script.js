@@ -1,7 +1,15 @@
-<!-- Include bcrypt.js for password hashing -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/bcryptjs/2.4.3/bcrypt.min.js"></script>
-<script>
-const users = JSON.parse(localStorage.getItem('users')) || {}; 
+// Assuming Firebase is set up and initialized
+// Replace with your Firebase config
+const firebaseConfig = {
+    apiKey: 'YOUR_API_KEY',
+    authDomain: 'YOUR_AUTH_DOMAIN',
+    projectId: 'YOUR_PROJECT_ID',
+    storageBucket: 'YOUR_STORAGE_BUCKET',
+    messagingSenderId: 'YOUR_MESSAGING_SENDER_ID',
+    appId: 'YOUR_APP_ID'
+};
+firebase.initializeApp(firebaseConfig);
+
 let currentUser = null;
 
 const books = [
@@ -18,19 +26,11 @@ const books = [
 
 let borrowedBooks = JSON.parse(localStorage.getItem('borrowedBooks')) || {};
 
-// Input Sanitization Function
-function sanitizeInput(input) {
-    // Prevent XSS attacks by escaping special characters
-    return input.replace(/[<>]/g, ''); // Basic sanitization
-}
-
-// Function to show/hide sections
 function showSection(sectionId) {
     document.querySelectorAll('.section').forEach(section => section.classList.remove('active'));
     document.getElementById(sectionId).classList.add('active');
 }
 
-// Function to update available and borrowed books
 function updateBookLists() {
     const availableBooksList = document.getElementById('available-books');
     const borrowedBooksList = document.getElementById('borrowed-books');
@@ -42,18 +42,81 @@ function updateBookLists() {
 
     books.forEach(book => {
         if (borrowedBooks[book]) {
-            borrowedBooksList.innerHTML += `<li class="borrowed">${sanitizeInput(book)} (Borrowed by ${sanitizeInput(borrowedBooks[book].user)} on ${sanitizeInput(borrowedBooks[book].time)}) <button onclick="returnBook('${sanitizeInput(book)}')">Return</button></li>`;
+            borrowedBooksList.innerHTML += `<li class="borrowed">${book} (Borrowed by ${borrowedBooks[book].user} on ${borrowedBooks[book].time}) <button onclick="returnBook('${book}')">Return</button></li>`;
         } else {
-            availableBooksList.innerHTML += `<li>${sanitizeInput(book)}</li>`;
-            bookSelect.innerHTML += `<option value="${sanitizeInput(book)}">${sanitizeInput(book)}</option>`;
+            availableBooksList.innerHTML += `<li>${book}</li>`;
+            bookSelect.innerHTML += `<option value="${book}">${book}</option>`;
         }
     });
 }
 
-// Borrow a book
+// Securely hash the password using SHA-256
+async function hashPassword(password) {
+    const encoder = new TextEncoder();
+    const data = encoder.encode(password);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    const hashHex = hashArray.map(byte => byte.toString(16).padStart(2, '0')).join('');
+    return hashHex;
+}
+
+function sanitizeInput(input) {
+    // Escape harmful characters to prevent XSS attacks
+    return input.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+function register() {
+    const username = sanitizeInput(document.getElementById('username-register').value);
+    const password = sanitizeInput(document.getElementById('password-register').value);
+    const age = sanitizeInput(document.getElementById('age').value);
+    const gender = sanitizeInput(document.getElementById('gender').value);
+
+    if (username && password && age && gender) {
+        firebase.auth().createUserWithEmailAndPassword(username, password)
+            .then(userCredential => {
+                const user = userCredential.user;
+                alert("Registration successful! Please log in.");
+                showSection('login-section');
+            })
+            .catch(error => {
+                alert("Error during registration: " + error.message);
+            });
+    } else {
+        alert("Please fill in all fields.");
+    }
+}
+
+function login() {
+    const username = sanitizeInput(document.getElementById('username-login').value);
+    const password = sanitizeInput(document.getElementById('password-login').value);
+
+    firebase.auth().signInWithEmailAndPassword(username, password)
+        .then(userCredential => {
+            const user = userCredential.user;
+            currentUser = user.email;
+            alert(`Welcome, ${user.email}!`);
+            updateBookLists();
+        })
+        .catch(error => {
+            alert("Invalid credentials: " + error.message);
+        });
+}
+
+function logout() {
+    firebase.auth().signOut()
+        .then(() => {
+            currentUser = null;
+            alert("You have been logged out!");
+            showSection('login-section');
+        })
+        .catch(error => {
+            alert("Error logging out: " + error.message);
+        });
+}
+
 function borrowBook() {
     const selectedBook = document.getElementById('book-select').value;
-    if (selectedBook) {
+    if (selectedBook && currentUser) {
         const borrowTime = new Date().toLocaleString();
         borrowedBooks[selectedBook] = {
             user: currentUser,
@@ -61,86 +124,28 @@ function borrowBook() {
         };
         localStorage.setItem('borrowedBooks', JSON.stringify(borrowedBooks));
         updateBookLists();
-        alert(`You have borrowed "${sanitizeInput(selectedBook)}" at ${borrowTime}`);
+        alert(`You have borrowed "${selectedBook}" at ${borrowTime}`);
     } else {
-        alert("Please select a book to borrow!");
+        alert("Please select a book to borrow or you are not logged in!");
     }
 }
 
-// Return a book
 function returnBook(book) {
     if (borrowedBooks[book] && borrowedBooks[book].user === currentUser) {
         delete borrowedBooks[book];
         localStorage.setItem('borrowedBooks', JSON.stringify(borrowedBooks));
         updateBookLists();
-        alert(`You have returned "${sanitizeInput(book)}"`);
+        alert(`You have returned "${book}"`);
     } else {
         alert("This book was not borrowed by you!");
     }
 }
 
-// Registration process with password hashing
-function register() {
-    const username = sanitizeInput(document.getElementById('username-register').value);
-    const password = sanitizeInput(document.getElementById('password-register').value);
-    const age = document.getElementById('age').value;
-    const gender = document.getElementById('gender').value;
-
-    if (username && password && age && gender) {
-        if (users[username]) {
-            alert("User already exists!");
-        } else {
-            // Hash the password before storing
-            bcrypt.hash(password, 10, (err, hashedPassword) => {
-                if (err) {
-                    alert("Error hashing password.");
-                    return;
-                }
-                users[username] = { password: hashedPassword, age, gender };
-                localStorage.setItem('users', JSON.stringify(users));
-                alert("Registration successful! Please log in.");
-                showSection('login-section');
-            });
-        }
-    } else {
-        alert("Please fill in all fields.");
-    }
-}
-
-// Login process with password comparison
-function login() {
-    const username = sanitizeInput(document.getElementById('username-login').value);
-    const password = sanitizeInput(document.getElementById('password-login').value);
-
-    if (users[username]) {
-        bcrypt.compare(password, users[username].password, (err, res) => {
-            if (res) {
-                currentUser = username;
-                alert(`Welcome, ${sanitizeInput(username)}!`);
-                updateBookLists();
-                showSection('borrow-section');
-            } else {
-                alert("Invalid credentials!");
-            }
-        });
-    } else {
-        alert("Invalid credentials!");
-    }
-}
-
-// Logout the user
-function logout() {
-    currentUser = null;
-    alert("You have been logged out!");
-    showSection('login-section');
-}
-
-// Export borrowed books to Excel
 function exportToExcel() {
     const borrowedBooksData = [];
     Object.keys(borrowedBooks).forEach(book => {
         const borrowDetails = borrowedBooks[book];
-        borrowedBooksData.push([sanitizeInput(book), sanitizeInput(borrowDetails.user), sanitizeInput(borrowDetails.time)]);
+        borrowedBooksData.push([book, borrowDetails.user, borrowDetails.time]);
     });
 
     if (borrowedBooksData.length > 0) {
@@ -157,12 +162,3 @@ function exportToExcel() {
 // Initialize the app
 updateBookLists();
 showSection('borrow-section');
-
-// Session timeout (auto-logout after 1 hour of inactivity)
-setTimeout(() => {
-    if (currentUser) {
-        alert("Your session has expired. Please log in again.");
-        logout();
-    }
-}, 3600000); // 1 hour timeout for session
-</script>
