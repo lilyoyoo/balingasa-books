@@ -1,3 +1,7 @@
+<!-- Add this CDN to include bcryptjs for password hashing -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bcryptjs/2.4.3/bcrypt.min.js"></script>
+
+<script>
 const users = JSON.parse(localStorage.getItem('users')) || {}; 
 let currentUser = null;
 
@@ -72,11 +76,14 @@ function register() {
     const age = document.getElementById('age').value;
     const gender = document.getElementById('gender').value;
 
+    // Validate and sanitize inputs
     if (username && password && age && gender) {
         if (users[username]) {
             alert("User already exists!");
         } else {
-            users[username] = { password, age, gender };
+            // Hash the password before storing it
+            const hashedPassword = bcrypt.hashSync(password, 10); // 10 is the salt rounds
+            users[username] = { password: hashedPassword, age, gender };
             localStorage.setItem('users', JSON.stringify(users));
             alert("Registration successful! Please log in.");
             showSection('login-section');
@@ -90,11 +97,11 @@ function login() {
     const username = document.getElementById('username-login').value;
     const password = document.getElementById('password-login').value;
 
-    if (users[username] && users[username].password === password) {
+    if (users[username] && bcrypt.compareSync(password, users[username].password)) {
         currentUser = username;
         alert(`Welcome, ${username}!`);
         updateBookLists();
-     } else {
+    } else {
         alert("Invalid credentials!");
     }
 }
@@ -126,3 +133,4 @@ function exportToExcel() {
 // Initialize the app
 updateBookLists();
 showSection('borrow-section');
+</script>
