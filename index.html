@@ -70,9 +70,85 @@
 
     <script src="script.js"></script>
     <script>
+        // Ensure the right section is shown
         document.addEventListener('DOMContentLoaded', function() {
-            showSection('login-section');
+            showSection('login-section'); // Show login section initially
         });
+
+        // Show and hide sections
+        function showSection(sectionId) {
+            document.querySelectorAll('.section').forEach(function(section) {
+                section.classList.remove('active'); // Hide all sections
+            });
+            document.getElementById(sectionId).classList.add('active'); // Show the selected section
+        }
+
+        // Login function
+        function login() {
+            const username = document.getElementById('username-login').value;
+            const password = document.getElementById('password-login').value;
+            
+            // Mock user database for demo purposes
+            const users = {
+                "user1": { username: "user1", password: "password123" },
+                "user2": { username: "user2", password: "password456" }
+            };
+
+            // Simple login validation
+            if (users[username] && users[username].password === password) {
+                alert(`Welcome, ${username}!`);
+                showSection('borrow-section'); // Show borrow section after successful login
+            } else {
+                alert("Invalid credentials!");
+            }
+        }
+
+        // Register function (you can add the logic to register new users here)
+        function register() {
+            const username = document.getElementById('username-register').value;
+            const password = document.getElementById('password-register').value;
+            const age = document.getElementById('age').value;
+            const gender = document.getElementById('gender').value;
+
+            // Add logic for registration (e.g., save to the database)
+
+            alert(`User ${username} registered successfully!`);
+            showSection('login-section'); // Switch back to login after registration
+        }
+
+        // Logout function
+        function logout() {
+            alert("You have logged out.");
+            showSection('login-section'); // Switch back to login after logout
+        }
+
+        // Function to borrow a book (add your logic for borrowing here)
+        function borrowBook() {
+            const book = document.getElementById('book-select').value;
+            if (book) {
+                const borrowedBooks = document.getElementById('borrowed-books');
+                const newItem = document.createElement('li');
+                newItem.textContent = book;
+                borrowedBooks.appendChild(newItem);
+            } else {
+                alert("Please select a book to borrow.");
+            }
+        }
+
+        // Export borrowed books to Excel (simple function, can be expanded)
+        function exportToExcel() {
+            const borrowedBooks = document.getElementById('borrowed-books').children;
+            const booksArray = [];
+            for (let book of borrowedBooks) {
+                booksArray.push([book.textContent]);
+            }
+            
+            const ws = XLSX.utils.aoa_to_sheet(booksArray);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Borrowed Books");
+
+            XLSX.writeFile(wb, "borrowed_books.xlsx");
+        }
     </script>
 </body>
 </html>
