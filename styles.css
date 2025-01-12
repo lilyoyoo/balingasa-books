@@ -13,10 +13,13 @@ h1, h2, h3 {
 
 .section {
     display: none;
+    opacity: 0;
+    transition: opacity 0.3s ease-in-out;
 }
 
 .active {
     display: block;
+    opacity: 1;
 }
 
 #auth-section, #borrow-section {
@@ -63,8 +66,22 @@ li {
 }
 
 li.borrowed {
-    background-color: #f8d7da;
+    background-color: #f9c2c2; /* Slightly softer red */
     color: #721c24;
+}
+
+li button {
+    margin-top: 5px;
+    background-color: #6c757d; /* Neutral color for the return button */
+    border: none;
+    color: white;
+    padding: 6px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+li button:hover {
+    background-color: #495057;
 }
 
 /* Responsive Design */
@@ -85,5 +102,9 @@ li.borrowed {
 
     h1, h2, h3 {
         font-size: 18px;
+    }
+
+    li button {
+        width: 100%; /* Ensure buttons are full-width on mobile */
     }
 }
