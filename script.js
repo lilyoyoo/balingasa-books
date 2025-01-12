@@ -1,6 +1,5 @@
-<!-- Add bcrypt.js to your HTML -->
+<!-- Include bcrypt.js for password hashing -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/bcryptjs/2.4.3/bcrypt.min.js"></script>
-
 <script>
 const users = JSON.parse(localStorage.getItem('users')) || {}; 
 let currentUser = null;
@@ -19,16 +18,19 @@ const books = [
 
 let borrowedBooks = JSON.parse(localStorage.getItem('borrowedBooks')) || {};
 
+// Input Sanitization Function
 function sanitizeInput(input) {
-    // Sanitize to remove any HTML special characters to prevent XSS
-    return input.replace(/[<>]/g, ''); // Simple sanitization
+    // Prevent XSS attacks by escaping special characters
+    return input.replace(/[<>]/g, ''); // Basic sanitization
 }
 
+// Function to show/hide sections
 function showSection(sectionId) {
     document.querySelectorAll('.section').forEach(section => section.classList.remove('active'));
     document.getElementById(sectionId).classList.add('active');
 }
 
+// Function to update available and borrowed books
 function updateBookLists() {
     const availableBooksList = document.getElementById('available-books');
     const borrowedBooksList = document.getElementById('borrowed-books');
@@ -48,15 +50,11 @@ function updateBookLists() {
     });
 }
 
+// Borrow a book
 function borrowBook() {
     const selectedBook = document.getElementById('book-select').value;
     if (selectedBook) {
         const borrowTime = new Date().toLocaleString();
-        if (borrowedBooks[selectedBook]) {
-            alert("This book is already borrowed!");
-            return;
-        }
-
         borrowedBooks[selectedBook] = {
             user: currentUser,
             time: borrowTime
@@ -69,6 +67,7 @@ function borrowBook() {
     }
 }
 
+// Return a book
 function returnBook(book) {
     if (borrowedBooks[book] && borrowedBooks[book].user === currentUser) {
         delete borrowedBooks[book];
@@ -80,6 +79,7 @@ function returnBook(book) {
     }
 }
 
+// Registration process with password hashing
 function register() {
     const username = sanitizeInput(document.getElementById('username-register').value);
     const password = sanitizeInput(document.getElementById('password-register').value);
@@ -90,13 +90,12 @@ function register() {
         if (users[username]) {
             alert("User already exists!");
         } else {
-            // Hash the password before storing it
+            // Hash the password before storing
             bcrypt.hash(password, 10, (err, hashedPassword) => {
                 if (err) {
                     alert("Error hashing password.");
                     return;
                 }
-
                 users[username] = { password: hashedPassword, age, gender };
                 localStorage.setItem('users', JSON.stringify(users));
                 alert("Registration successful! Please log in.");
@@ -108,6 +107,7 @@ function register() {
     }
 }
 
+// Login process with password comparison
 function login() {
     const username = sanitizeInput(document.getElementById('username-login').value);
     const password = sanitizeInput(document.getElementById('password-login').value);
@@ -128,12 +128,14 @@ function login() {
     }
 }
 
+// Logout the user
 function logout() {
     currentUser = null;
     alert("You have been logged out!");
     showSection('login-section');
 }
 
+// Export borrowed books to Excel
 function exportToExcel() {
     const borrowedBooksData = [];
     Object.keys(borrowedBooks).forEach(book => {
@@ -156,12 +158,11 @@ function exportToExcel() {
 updateBookLists();
 showSection('borrow-section');
 
-// Session timeout mechanism (Auto-logout after 1 hour of inactivity)
+// Session timeout (auto-logout after 1 hour of inactivity)
 setTimeout(() => {
     if (currentUser) {
         alert("Your session has expired. Please log in again.");
         logout();
     }
 }, 3600000); // 1 hour timeout for session
-
 </script>
