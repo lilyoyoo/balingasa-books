@@ -17,10 +17,23 @@ let borrowedBooks = JSON.parse(localStorage.getItem('borrowedBooks')) || {};
 
 function showSection(sectionId) {
     document.querySelectorAll('.section').forEach(section => section.classList.remove('active'));
+    
+    // Ensure the borrow section is only shown when the user is logged in
+    if (sectionId === 'borrow-section' && !currentUser) {
+        alert("Please log in to borrow books.");
+        showSection('login-section');
+        return;
+    }
+    
     document.getElementById(sectionId).classList.add('active');
 }
 
 function updateBookLists() {
+    if (!currentUser) {
+        alert("Please log in first.");
+        return;
+    }
+    
     const availableBooksList = document.getElementById('available-books');
     const borrowedBooksList = document.getElementById('borrowed-books');
     const bookSelect = document.getElementById('book-select');
@@ -40,6 +53,12 @@ function updateBookLists() {
 }
 
 function borrowBook() {
+    if (!currentUser) {
+        alert("Please log in to borrow books.");
+        showSection('login-section');
+        return;
+    }
+    
     const selectedBook = document.getElementById('book-select').value;
     if (selectedBook) {
         const borrowTime = new Date().toLocaleString();
@@ -56,6 +75,12 @@ function borrowBook() {
 }
 
 function returnBook(book) {
+    if (!currentUser) {
+        alert("Please log in to return books.");
+        showSection('login-section');
+        return;
+    }
+
     if (borrowedBooks[book] && borrowedBooks[book].user === currentUser) {
         delete borrowedBooks[book];
         localStorage.setItem('borrowedBooks', JSON.stringify(borrowedBooks));
@@ -94,7 +119,8 @@ function login() {
         currentUser = username;
         alert(`Welcome, ${username}!`);
         updateBookLists();
-     } else {
+        showSection('borrow-section'); // Show borrow section after login
+    } else {
         alert("Invalid credentials!");
     }
 }
@@ -102,7 +128,8 @@ function login() {
 function logout() {
     currentUser = null;
     alert("You have been logged out!");
-    showSection('login-section');
+    showSection('login-section'); // Go back to login
+    updateBookLists(); // Update book lists
 }
 
 function exportToExcel() {
@@ -125,4 +152,4 @@ function exportToExcel() {
 
 // Initialize the app
 updateBookLists();
-showSection('borrow-section');
+showSection('login-section'); // Start by showing the login section initially
