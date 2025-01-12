@@ -15,18 +15,9 @@ const books = [
 
 let borrowedBooks = JSON.parse(localStorage.getItem('borrowedBooks')) || {};
 
-// Show specific section
 function showSection(sectionId) {
-    // Hide all sections
-    document.querySelectorAll('.section').forEach(section => {
-        section.classList.remove('active');
-    });
-
-    // Show the selected section
-    const section = document.getElementById(sectionId);
-    if (section) {
-        section.classList.add('active');
-    }
+    document.querySelectorAll('.section').forEach(section => section.classList.remove('active'));
+    document.getElementById(sectionId).classList.add('active');
 }
 
 function updateBookLists() {
@@ -102,9 +93,8 @@ function login() {
     if (users[username] && users[username].password === password) {
         currentUser = username;
         alert(`Welcome, ${username}!`);
-        showSection('borrow-section');
-        updateBookLists(); // Update book lists after login
-    } else {
+        updateBookLists();
+     } else {
         alert("Invalid credentials!");
     }
 }
@@ -134,7 +124,5 @@ function exportToExcel() {
 }
 
 // Initialize the app
-window.onload = () => {
-    showSection('login-section');  // Show the login section by default
-    updateBookLists();  // Populate book lists if the user is already logged in
-};
+updateBookLists();
+showSection('borrow-section');
