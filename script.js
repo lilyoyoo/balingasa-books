@@ -15,25 +15,14 @@ const books = [
 
 let borrowedBooks = JSON.parse(localStorage.getItem('borrowedBooks')) || {};
 
+// Function to show different sections
 function showSection(sectionId) {
     document.querySelectorAll('.section').forEach(section => section.classList.remove('active'));
-    
-    // Ensure the borrow section is only shown when the user is logged in
-    if (sectionId === 'borrow-section' && !currentUser) {
-        alert("Please log in to borrow books.");
-        showSection('login-section');
-        return;
-    }
-    
     document.getElementById(sectionId).classList.add('active');
 }
 
+// Function to update available and borrowed books list
 function updateBookLists() {
-    if (!currentUser) {
-        alert("Please log in first.");
-        return;
-    }
-    
     const availableBooksList = document.getElementById('available-books');
     const borrowedBooksList = document.getElementById('borrowed-books');
     const bookSelect = document.getElementById('book-select');
@@ -52,13 +41,8 @@ function updateBookLists() {
     });
 }
 
+// Borrow book function
 function borrowBook() {
-    if (!currentUser) {
-        alert("Please log in to borrow books.");
-        showSection('login-section');
-        return;
-    }
-    
     const selectedBook = document.getElementById('book-select').value;
     if (selectedBook) {
         const borrowTime = new Date().toLocaleString();
@@ -74,13 +58,8 @@ function borrowBook() {
     }
 }
 
+// Return book function
 function returnBook(book) {
-    if (!currentUser) {
-        alert("Please log in to return books.");
-        showSection('login-section');
-        return;
-    }
-
     if (borrowedBooks[book] && borrowedBooks[book].user === currentUser) {
         delete borrowedBooks[book];
         localStorage.setItem('borrowedBooks', JSON.stringify(borrowedBooks));
@@ -91,18 +70,30 @@ function returnBook(book) {
     }
 }
 
+// Register user function
 function register() {
     const username = document.getElementById('username-register').value;
     const password = document.getElementById('password-register').value;
     const age = document.getElementById('age').value;
     const gender = document.getElementById('gender').value;
 
+    // Debugging: Log the user input
+    console.log("Registering user:", username, password, age, gender);
+
+    // Validation: Ensure no fields are empty
     if (username && password && age && gender) {
+        // Check if the username already exists
         if (users[username]) {
             alert("User already exists!");
+            console.log("User already exists:", username);
         } else {
+            // Add user to the users object
             users[username] = { password, age, gender };
-            localStorage.setItem('users', JSON.stringify(users));
+            localStorage.setItem('users', JSON.stringify(users));  // Save the updated users object to localStorage
+            
+            // Log the users object to check if it's saved correctly
+            console.log("Users saved to localStorage:", users);
+            
             alert("Registration successful! Please log in.");
             showSection('login-section');
         }
@@ -111,27 +102,32 @@ function register() {
     }
 }
 
+// Login function
 function login() {
     const username = document.getElementById('username-login').value;
     const password = document.getElementById('password-login').value;
+
+    // Debugging: Log the input credentials
+    console.log("Login attempt:", username, password);
 
     if (users[username] && users[username].password === password) {
         currentUser = username;
         alert(`Welcome, ${username}!`);
         updateBookLists();
-        showSection('borrow-section'); // Show borrow section after login
+        showSection('borrow-section');  // Show book borrowing section after login
     } else {
         alert("Invalid credentials!");
     }
 }
 
+// Logout function
 function logout() {
     currentUser = null;
     alert("You have been logged out!");
-    showSection('login-section'); // Go back to login
-    updateBookLists(); // Update book lists
+    showSection('login-section');
 }
 
+// Export borrowed books to Excel
 function exportToExcel() {
     const borrowedBooksData = [];
     Object.keys(borrowedBooks).forEach(book => {
@@ -152,4 +148,4 @@ function exportToExcel() {
 
 // Initialize the app
 updateBookLists();
-showSection('login-section'); // Start by showing the login section initially
+showSection('login-section');  // Show the login section by default
