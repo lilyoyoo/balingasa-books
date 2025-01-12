@@ -93,8 +93,9 @@ function login() {
     if (users[username] && users[username].password === password) {
         currentUser = username;
         alert(`Welcome, ${username}!`);
-        updateBookLists();
-     } else {
+        showSection('borrow-section');
+        updateBookLists(); // Update book lists after login
+    } else {
         alert("Invalid credentials!");
     }
 }
@@ -124,5 +125,5 @@ function exportToExcel() {
 }
 
 // Initialize the app
-updateBookLists();
-showSection('borrow-section');
+// Initially, only login section should be visible, so this is handled after login
+showSection('login-section');
