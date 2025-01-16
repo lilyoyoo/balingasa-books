@@ -1,17 +1,48 @@
 const users = JSON.parse(localStorage.getItem('users')) || {};
 let currentUser = null;
 
-const books = [
-    "Principles of Marketing",
-    "The Sea",
-    "The Science Library",
-    "Mysteries of Mind Space and Time",
-    "The World We Lived In",
-    "Discover Science",
-    "Integrated Science Philippines 8",
-    "Earth Science",
-    "Skylab's Astronomy and Space Science"
-];
+const books = {
+    English: [
+        "DISCOVER SKILLS FOR LIFE",
+        "Encyclopedia of The World and its people",
+        "MODULE IN ENGLISH 7",
+        "MODULE IN ENGLISH 8",
+        "The Apartheid Reader",
+        "Visual Intelligence",
+        "Other books you want to borrow"
+    ],
+    Filipino: [
+        "FLORANTE AT LAURA",
+        "Ibong Adarna",
+        "NOLI ME TANGERE",
+        "SIBIKA AT KULTURA PARA SA MALAYANG PILIPINO",
+        "Other books you want to borrow"
+    ],
+    ICT: [
+        "Computer In Business",
+        "CYBERSTRATEGIES - HOW TO BUILD AN INTERN",
+        "SIMPLE ELECTRONIC (BASIC)",
+        "Stevens COMPUTER GRAPHICS BASICS Prentice",
+        "Word Processing - Desktop Publishing",
+        "Other books you want to borrow"
+    ],
+    Science: [
+        "HOLT SCIENCE AND TECHNOLOGY WATER ON EA",
+        "Prentice Hall SCIENCE MATTER Building block of matter",
+        "SKYLABS ASTRONOMY AND SPACE SCIENCES",
+        "THE SCIENCE OF ANIMAL AGRICULTURE",
+        "Principles of Marketing",
+        "The Sea",
+        "The Science Library",
+        "Mysteries of Mind Space and Time",
+        "The World We Lived In",
+        "Discover Science",
+        "Integrated Science Philippines 8",
+        "Earth Science",
+        "Skylab's Astronomy and Space Science",
+        "Other books you want to borrow"
+    ]
+};
 
 let borrowedBooks = JSON.parse(localStorage.getItem('borrowedBooks')) || {};
 
@@ -21,6 +52,7 @@ function showSection(sectionId) {
 }
 
 function updateBookLists() {
+    const categorySelect = document.getElementById('category-select');
     const availableBooksList = document.getElementById('available-books');
     const borrowedBooksList = document.getElementById('borrowed-books');
     const bookSelect = document.getElementById('book-select');
@@ -29,14 +61,17 @@ function updateBookLists() {
     borrowedBooksList.innerHTML = '';
     bookSelect.innerHTML = '<option value="" disabled selected>Select a book</option>';
 
-    books.forEach(book => {
-        if (borrowedBooks[book]) {
-            borrowedBooksList.innerHTML += `<li class="borrowed">${book} (Borrowed by ${borrowedBooks[book].user} on ${borrowedBooks[book].time}) <button onclick="returnBook('${book}')">Return</button></li>`;
-        } else {
-            availableBooksList.innerHTML += `<li>${book}</li>`;
-            bookSelect.innerHTML += `<option value="${book}">${book}</option>`;
-        }
-    });
+    const selectedCategory = categorySelect.value;
+    if (selectedCategory && books[selectedCategory]) {
+        books[selectedCategory].forEach(book => {
+            if (borrowedBooks[book]) {
+                borrowedBooksList.innerHTML += `<li class="borrowed">${book} (Borrowed by ${borrowedBooks[book].user} on ${borrowedBooks[book].time}) <button onclick="returnBook('${book}')">Return</button></li>`;
+            } else {
+                availableBooksList.innerHTML += `<li>${book}</li>`;
+                bookSelect.innerHTML += `<option value="${book}">${book}</option>`;
+            }
+        });
+    }
 }
 
 function borrowBook() {
