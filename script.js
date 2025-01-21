@@ -52,8 +52,140 @@ function showSection(sectionId) {
     document.querySelectorAll('.section').forEach(section => section.classList.remove('active'));
     document.getElementById(sectionId).classList.add('active');
 }
+// Update "Your Borrowed Books" section dynamically
+function updateBorrowedBooksList() {
+    const borrowedBooksList = document.getElementById('borrowed-books');
+    borrowedBooksList.innerHTML = ''; // Clear the current list
 
-// Update book lists
+    if (selectedBooks.length > 0) {
+        borrowedBooksList.innerHTML = '<li>Choose the books you want to borrow and confirm your selection...</li>'; // Indicate selection in progress
+        selectedBooks.forEach(book => {
+            borrowedBooksList.innerHTML += `<li>${book} <button onclick="confirmBorrow('${book}')">Confirm Borrow</button></li>`;
+        });
+    } else {
+        borrowedBooksList.innerHTML = '<li>No books selected yet.</li>';
+    }
+}
+
+
+// Update borrowed books list
+function updateBorrowedBooksList() {
+    const borrowedBooksList = document.getElementById('borrowed-books');
+    borrowedBooksList.innerHTML = '';
+
+    selectedBooks.forEach(book => {
+        borrowedBooksList.innerHTML += `<li>${book} <button onclick="returnBook('${book}')">Return</button></li>`;
+    });
+}
+
+// Handle book selection and dynamically update "Your Borrowed Books"
+function handleMultiSelect(event) {
+    const book = event.target.value;
+
+    // Check if the book is already selected
+    if (selectedBooks.includes(book)) {
+        selectedBooks = selectedBooks.filter(b => b !== book); // Remove book if already selected
+    } else {
+        selectedBooks.push(book); // Add book to the selection
+    }
+
+    // Update the "Your Borrowed Books" list dynamically
+    updateBorrowedBooksList();
+}
+
+// Update "Your Borrowed Books" section dynamically
+function updateBorrowedBooksList() {
+    const borrowedBooksList = document.getElementById('borrowed-books');
+    borrowedBooksList.innerHTML = ''; // Clear the current list
+
+    if (selectedBooks.length > 0) {
+        borrowedBooksList.innerHTML = '<li>Choosing more books...</li>'; // Indicate selection in progress
+        selectedBooks.forEach(book => {
+            borrowedBooksList.innerHTML += `<li>${book} <button onclick="confirmBorrow('${book}')">Confirm Borrow</button></li>`;
+        });
+    } else {
+        borrowedBooksList.innerHTML = '<li>No books selected yet.</li>';
+    }
+}
+
+// Function to handle the actual borrowing process
+function borrowBook() {
+    const borrowPeriod = document.getElementById('borrow-period').value;
+    
+    if (selectedBooks.length > 0) {
+        if (borrowPeriod > 0) {
+            selectedBooks.forEach(book => {
+                const borrowTime = new Date().toLocaleString();
+                borrowedBooks[book] = {
+                    user: currentUser,
+                    time: borrowTime,
+                    returnBy: new Date(new Date().getTime() + (borrowPeriod * 24 * 60 * 60 * 1000))
+                };
+            });
+
+            // Save to localStorage
+            localStorage.setItem('borrowedBooks', JSON.stringify(borrowedBooks));
+            selectedBooks = []; // Clear selected books after borrowing
+            updateBorrowedBooksList();
+            updateBookLists();
+
+            // Confirmation message
+            alert(`The book(s) you borrowed are confirmed. Please pick up your ticket at the librarian.`);
+        } else {
+            alert("Please enter a valid borrowing period.");
+        }
+    } else {
+        alert("Please select at least one book to borrow.");
+    }
+}
+
+
+
+// Return borrowed book
+function returnBook(book) {
+    if (borrowedBooks[book] && borrowedBooks[book].user === currentUser) {
+        delete borrowedBooks[book];
+        localStorage.setItem('borrowedBooks', JSON.stringify(borrowedBooks));
+        updateBookLists();
+        updateBorrowedBooksList();
+        alert(`You have returned "${book}".`);
+    } else {
+        alert("This book was not borrowed by you!");
+    }
+}
+
+// Register new user with additional fields
+function register() {
+    const username = document.getElementById('username-register').value;
+    const password = document.getElementById('password-register').value;
+    const firstName = document.getElementById('first-name').value;
+    const middleName = document.getElementById('middle-name').value;
+    const lastName = document.getElementById('last-name').value;
+    const age = document.getElementById('age').value;
+    const gender = document.getElementById('gender').value;
+
+    if (username && password && firstName && lastName && age && gender) {
+        if (users[username]) {
+            alert("User already exists!");
+        } else {
+            users[username] = { 
+                password, 
+                firstName, 
+                middleName: middleName || '', // Optional field
+                lastName, 
+                age, 
+                gender 
+            };
+            localStorage.setItem('users', JSON.stringify(users));
+            alert("Registration successful! Please log in.");
+            showSection('login-section');
+        }
+    } else {
+        alert("Please fill in all required fields.");
+    }
+}
+
+// Display user full name in borrowed book details
 function updateBookLists() {
     const categorySelect = document.getElementById('category-select');
     const availableBooksList = document.getElementById('available-books');
@@ -71,11 +203,12 @@ function updateBookLists() {
             bookSelect.appendChild(option);
 
             if (borrowedBooks[book]) {
-                // Show the "Return" button only for the logged-in user
+                const user = users[borrowedBooks[book].user];
+                const fullName = `${user.firstName} ${user.middleName ? user.middleName + ' ' : ''}${user.lastName}`;
                 if (borrowedBooks[book].user === currentUser) {
-                    availableBooksList.innerHTML += `<li class="borrowed">${book} (Borrowed by ${borrowedBooks[book].user} on ${borrowedBooks[book].time}) <button onclick="returnBook('${book}')">Return</button></li>`;
+                    availableBooksList.innerHTML += `<li class="borrowed">${book} (Borrowed by ${fullName} on ${borrowedBooks[book].time}) <button onclick="returnBook('${book}')">Return</button></li>`;
                 } else {
-                    availableBooksList.innerHTML += `<li>${book} (Borrowed by ${borrowedBooks[book].user})</li>`;
+                    availableBooksList.innerHTML += `<li>${book} (Borrowed by ${fullName})</li>`;
                 }
             } else {
                 availableBooksList.innerHTML += `<li>${book}</li>`;
@@ -84,93 +217,6 @@ function updateBookLists() {
     }
 }
 
-// Update borrowed books list
-function updateBorrowedBooksList() {
-    const borrowedBooksList = document.getElementById('borrowed-books');
-    borrowedBooksList.innerHTML = '';
-
-    selectedBooks.forEach(book => {
-        borrowedBooksList.innerHTML += `<li>${book} <button onclick="returnBook('${book}')">Return</button></li>`;
-    });
-}
-
-// Handle book selection and updating borrowed books list
-function handleMultiSelect(event) {
-    const book = event.target.value;
-
-    if (selectedBooks.includes(book)) {
-        // If already selected, remove it
-        selectedBooks = selectedBooks.filter(b => b !== book);
-    } else {
-        // Otherwise, add to selected list
-        selectedBooks.push(book);
-    }
-
-    // Update the list of borrowed books
-    updateBorrowedBooksList();
-}
-
-// Borrow selected books
-function borrowBook() {
-    const borrowPeriod = document.getElementById('borrow-period').value;
-
-    if (selectedBooks.length > 0 && borrowPeriod > 0) {
-        const borrowTime = new Date().toLocaleString();
-
-        selectedBooks.forEach(book => {
-            if (!borrowedBooks[book]) {
-                borrowedBooks[book] = {
-                    user: currentUser,
-                    time: borrowTime,
-                    returnBy: new Date(new Date().getTime() + (borrowPeriod * 24 * 60 * 60 * 1000))
-                };
-            }
-        });
-
-        // Save updated borrowedBooks to localStorage
-        localStorage.setItem('borrowedBooks', JSON.stringify(borrowedBooks));
-
-        // Update book lists UI
-        updateBookLists();
-        alert(`You have borrowed ${selectedBooks.length} book(s) for ${borrowPeriod} days.`);
-    } else {
-        alert("Please select at least one book and enter a valid borrowing period!");
-    }
-}
-
-// Return borrowed book
-function returnBook(book) {
-    if (borrowedBooks[book] && borrowedBooks[book].user === currentUser) {
-        delete borrowedBooks[book];
-        localStorage.setItem('borrowedBooks', JSON.stringify(borrowedBooks));
-        updateBookLists();
-        updateBorrowedBooksList();
-        alert(`You have returned "${book}".`);
-    } else {
-        alert("This book was not borrowed by you!");
-    }
-}
-
-// Register new user
-function register() {
-    const username = document.getElementById('username-register').value;
-    const password = document.getElementById('password-register').value;
-    const age = document.getElementById('age').value;
-    const gender = document.getElementById('gender').value;
-
-    if (username && password && age && gender) {
-        if (users[username]) {
-            alert("User already exists!");
-        } else {
-            users[username] = { password, age, gender };
-            localStorage.setItem('users', JSON.stringify(users));
-            alert("Registration successful! Please log in.");
-            showSection('login-section');
-        }
-    } else {
-        alert("Please fill in all fields.");
-    }
-}
 
 // User login
 function login() {
@@ -194,16 +240,30 @@ function logout() {
     showSection('login-section');
 }
 
-// Export borrowed books to Excel
+// Export borrowed books to Excel with full name and section
 function exportToExcel() {
     const borrowedBooksData = [];
     Object.keys(borrowedBooks).forEach(book => {
         const borrowDetails = borrowedBooks[book];
-        borrowedBooksData.push([book, borrowDetails.user, borrowDetails.time]);
+        const user = users[borrowDetails.user];
+        if (user) {
+            const fullName = `${user.firstName} ${user.middleName ? user.middleName + ' ' : ''}${user.lastName}`;
+            borrowedBooksData.push([
+                book, 
+                fullName, 
+                user.section, 
+                borrowDetails.user, 
+                borrowDetails.time, 
+                borrowDetails.returnBy ? new Date(borrowDetails.returnBy).toLocaleString() : "N/A"
+            ]);
+        }
     });
 
     if (borrowedBooksData.length > 0) {
-        const ws = XLSX.utils.aoa_to_sheet([["Book Title", "Borrowed By", "Date & Time"], ...borrowedBooksData]);
+        const ws = XLSX.utils.aoa_to_sheet([
+            ["Book Title", "Full Name", "Section", "Username", "Borrowed Date & Time", "Return By"],
+            ...borrowedBooksData
+        ]);
         const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, "Borrowed Books");
 
@@ -212,6 +272,7 @@ function exportToExcel() {
         alert("No borrowed books to export.");
     }
 }
+
 
 // Initialize the app
 function init() {
