@@ -3,7 +3,7 @@
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Library</title> <!-- Change title to just "Library" -->
+        <title>Library</title>
         <link rel="stylesheet" href="styles.css">
         <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js"></script>
         <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app.js"></script>
@@ -11,130 +11,91 @@
         <script type="module" src="firebaseauth.js"></script>
         <link rel="icon" type="image/png" href="image.png">
         <style>
-            body {
-                background: url('image.png') no-repeat left top fixed;
-                background-size: 150px;
-                margin: 0;
-            }
-        
-            @media (max-width: 768px) {
-                body {
-                    background-position: left top;
-                    background-size: 100px;
-                }
-            }
-            
-            /* Remove "Library Borrowing System" text */
-            h1, h2, h3, p {
-                display: none;
+            #borrowed-books-container {
+                max-height: 300px; /* Adjust as needed */
+                overflow-y: auto;
+                overflow-x: hidden;
+                border: 2px solid #ccc;
+                padding: 10px;
+                background: rgba(0, 0, 0, 0.2);
+                border-radius: 10px;
             }
         </style>
     </head>
-    
 <body>
-    <h1>Library Borrowing System</h1>
+    <div class="container">
+        <div id="login-section" class="section active">
+            <div class="auth-card">
+                <h2>Login</h2>
+                <label for="username-login">Username</label>
+                <input type="text" id="username-login" placeholder="Enter your username" required>
+                <label for="password-login">Password</label>
+                <input type="password" id="password-login" placeholder="Enter your password" required>
+                <button onclick="login()">Login</button>
+                <div id="auth-message"></div>
+                <button class="alt-btn" onclick="showSection('register-section')">Register</button>
+            </div>
+        </div>
 
-    <!-- Login Section -->
-    <div id="login-section" class="section active">
-        <h2>Login</h2>
-        <div id="auth-section">
-            <label for="username-login">Username</label>
-            <input type="text" id="username-login" placeholder="Enter your username" required>
-            <label for="password-login">Password</label>
-            <input type="password" id="password-login" placeholder="Enter your password" required>
-            <button onclick="login()">Login</button>
-            <div id="auth-message"></div>
-            <button onclick="showSection('register-section')">Register</button>
+        <div id="register-section" class="section">
+            <div class="auth-card">
+                <h2>Register</h2>
+                <label for="first-name">First Name</label>
+                <input type="text" id="first-name" placeholder="Enter your first name" required>
+                <label for="last-name">Last Name</label>
+                <input type="text" id="last-name" placeholder="Enter your last name" required>
+                <label for="username-register">Username</label>
+                <input type="text" id="username-register" placeholder="Choose a username" required>
+                <label for="password-register">Password</label>
+                <input type="password" id="password-register" placeholder="Create a password" required>
+                <label for="age">Age</label>
+                <input type="number" id="age" placeholder="Enter your age" required>
+                <label for="gender">Gender</label>
+                <select id="gender" required>
+                    <option value="" disabled selected>Select your gender</option>
+                    <option value="male">Male</option>
+                    <option value="female">Female</option>
+                    <option value="LGBT">LGBT</option>
+                </select>
+                <label for="section">Section</label>
+                <input type="text" id="section" placeholder="Enter your section" required>
+                <button onclick="register()">Register</button>
+                <button class="alt-btn" onclick="showSection('login-section')">Back to Login</button>
+            </div>
+        </div>
+
+        <div id="borrow-section" class="section">
+            <div class="borrow-card">
+                <h2>Book Borrowing</h2>
+                <label for="category-select">Select a Category:</label>
+                <select id="category-select" onchange="updateBookLists()">
+                    <option value="" disabled selected>Select a category</option>
+                    <option value="English">English</option>
+                    <option value="Filipino">Filipino</option>
+                    <option value="ICT">ICT</option>
+                    <option value="Science">Science</option>
+                </select>
+                <h3>Available Books:</h3>
+                <ul id="available-books"></ul>
+                <h3>Borrow a Book:</h3>
+                <select id="book-select" multiple>
+                    <option value="" disabled>Select books</option>
+                </select>
+                
+                <h3>Your Borrowed Books:</h3>
+                <div id="borrowed-books-container">
+                    <ul id="borrowed-books"></ul>
+                </div>
+                <label for="borrow-period">Enter Borrowing Period (in days):</label>
+                <input type="number" id="borrow-period" min="1" placeholder="Enter borrowing period" />
+                <button onclick="borrowBook()">Borrow</button>
+                <button class="alt-btn" onclick="logout()">Logout</button>
+                <button class="alt-btn" onclick="exportToExcel()">Export to Excel</button>
+            </div>
         </div>
     </div>
-
-<!-- Register Section -->
-<div id="register-section" class="section">
-    <h2>Register</h2>
-    <div id="auth-section">
-        <!-- First Name -->
-        <label for="first-name">First Name</label>
-        <input type="text" id="first-name" placeholder="Enter your first name" required>
-        
-        <!-- Middle Name -->
-        <label for="middle-name">Middle Name (Optional)</label>
-        <input type="text" id="middle-name" placeholder="Enter your middle name">
-
-        <!-- Last Name -->
-        <label for="last-name">Last Name</label>
-        <input type="text" id="last-name" placeholder="Enter your last name" required>
-        
-        <!-- Username -->
-        <label for="username-register">Username</label>
-        <input type="text" id="username-register" placeholder="Choose a username" required>
-        
-        <!-- Password -->
-        <label for="password-register">Password</label>
-        <input type="password" id="password-register" placeholder="Create a password" required>
-        
-        <!-- Age -->
-        <label for="age">Age</label>
-        <input type="number" id="age" placeholder="Enter your age" required>
-        
-        <!-- Gender -->
-        <label for="gender">Gender</label>
-        <select id="gender" required>
-            <option value="" disabled selected>Select your gender</option>
-            <option value="male">Male</option>
-            <option value="female">Female</option>
-            <option value="LGBT">LGBT</option>
-        </select>
-
-        <!-- Section -->
-        <label for="section">Section</label>
-        <input type="text" id="section" placeholder="Enter your section" required>
-
-        <!-- Register Button -->
-        <button onclick="register()">Register</button>
-        <div id="auth-message"></div>
-        <button onclick="showSection('login-section')">Back to Login</button>
-    </div>
-</div>
-
-
-<!-- Book Borrowing Section -->
-<div id="borrow-section" class="section">
-    <h2>Book Borrowing</h2>
-    <div id="auth-section">
-        <h3>Select a Category:</h3>
-        <select id="category-select" onchange="updateBookLists()">
-            <option value="" disabled selected>Select a category</option>
-            <option value="English">English</option>
-            <option value="Filipino">Filipino</option>
-            <option value="ICT">ICT</option>
-            <option value="Science">Science</option>
-        </select>
-        
-        <h3>Available Books:</h3>
-        <ul id="available-books"></ul>
-        
-        <h3>Borrow a Book:</h3>
-        <!-- Multiple select for books -->
-        <select id="book-select" multiple>
-            <option value="" disabled>Select books</option>
-        </select>
-
-        <!-- Borrowed Books List (directly below Borrow a Book) -->
-        <h3>Your Borrowed Books:</h3>
-        <ul id="borrowed-books"></ul>
-        
-        <!-- Input for borrowing period -->
-        <h3>Enter Borrowing Period (in days):</h3>
-        <input type="number" id="borrow-period" min="1" placeholder="Enter borrowing period in days" />
-        <p>Please choose your books and confirm them before proceeding to borrow.</p>
-        <button onclick="borrowBook()">Borrow</button>
- 
-        <button onclick="logout()">Logout</button>
-        <button onclick="exportToExcel()">Export Borrowed Books to Excel</button>
-    </div>
-</div>
-
-
     <script src="script.js"></script>
+   
+
 </body>
 </html>
